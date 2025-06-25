@@ -9,10 +9,16 @@ const todoRoutes = require("./routes/todoRoutes");
 
 const app = express();
 
-// ✅ CORS middleware with options
+// ✅ Trust proxy to allow secure cookies (important for Railway)
+app.set("trust proxy", 1);
+
+// ✅ CORS middleware with localhost and Vercel allowed
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: [
+      "http://localhost:3000",
+      "https://your-frontend.vercel.app", // 🔁 Replace with your actual Vercel frontend URL
+    ],
     credentials: true,
   })
 );
@@ -27,8 +33,9 @@ app.use("/api/todos", todoRoutes);
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    app.listen(8000, () => {
-      console.log("Server running on http://localhost:8000");
+    const port = process.env.PORT || 8000;
+    app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
     });
   })
   .catch((err) => console.error(err));
