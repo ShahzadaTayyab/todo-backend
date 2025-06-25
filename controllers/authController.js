@@ -7,31 +7,28 @@ exports.registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Check if user exists
     const userExists = await User.findOne({ email });
     if (userExists)
       return res.status(400).json({ message: "User already exists" });
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Save user
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
     });
 
-    // Generate token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
+    // 🔥 Cookie config updated for Railway + Vercel
     res
       .cookie("token", token, {
         httpOnly: true,
-        secure: false, // ✅ allow localhost dev
-        sameSite: "Lax", // ✅ allow cross-origin cookie for localhost:3000
+        secure: process.env.NODE_ENV === "production", // true on Railway
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       })
       .status(201)
@@ -64,12 +61,11 @@ exports.loginUser = async (req, res) => {
       expiresIn: "7d",
     });
 
-    // ✅ Set cookie for localhost
     res
       .cookie("token", token, {
         httpOnly: true,
-        secure: false, // ✅ false for localhost
-        sameSite: "Lax", // ✅ more relaxed for localhost:3000 -> 8000
+        secure: process.env.NODE_ENV === "production", // ✅ Secure on Railway
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // ✅ Cross-origin allowed
         maxAge: 7 * 24 * 60 * 60 * 1000,
       })
       .json({
@@ -84,7 +80,13 @@ exports.loginUser = async (req, res) => {
 };
 
 exports.logoutUser = (req, res) => {
-  res.clearCookie("token").json({ message: "Logged out successfully" });
+  res
+    .clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    })
+    .json({ message: "Logged out successfully" });
 };
 
 exports.getMe = async (req, res) => {
