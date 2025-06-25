@@ -15,10 +15,7 @@ app.set("trust proxy", 1);
 // ✅ CORS middleware with localhost and Vercel allowed
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://your-frontend.vercel.app", // 🔁 Replace with your actual Vercel frontend URL
-    ],
+    origin: "https://todo-frontend-h9ve.vercel.app",
     credentials: true,
   })
 );
